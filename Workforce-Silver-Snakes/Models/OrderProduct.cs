@@ -9,6 +9,6 @@ namespace Workforce_Silver_Snakes.Models
     {
         public int Id { get; set; }
         public int OrderId { get; set; }
-        public int ProuductId { get; set; }
+        public int ProductId { get; set; }
     }
 }
