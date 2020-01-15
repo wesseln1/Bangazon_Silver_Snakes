@@ -11,6 +11,10 @@ namespace Workforce_Silver_Snakes.Models
 
         public string Name { get; set; }
 
-        public string Budget { get; set; }
+        public int Budget { get; set; }
+
+        public int EmployeeCount { get; set; }
+
+        public List<Employee> Employees { get; set; } = new List<Employee>();
     }
 }
