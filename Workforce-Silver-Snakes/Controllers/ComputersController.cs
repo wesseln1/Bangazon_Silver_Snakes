@@ -4,11 +4,26 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 
 namespace Workforce_Silver_Snakes.Controllers
 {
     public class ComputersController : Controller
     {
+        private readonly IConfiguration _config;
+        public ComputersController(IConfiguration config)
+        {
+            _config = config;
+        }
+        public SqlConnection Connection
+        {
+            get
+            {
+                return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            }
+        }
+     
         // GET: Computers
         public ActionResult Index()
         {
