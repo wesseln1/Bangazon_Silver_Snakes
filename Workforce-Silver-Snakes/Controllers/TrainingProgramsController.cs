@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Workforce_Silver_Snakes.Models;
 
 namespace Workforce_Silver_Snakes.Controllers
 {
@@ -29,10 +31,39 @@ namespace Workforce_Silver_Snakes.Controllers
 
 
 
-            // GET: TrainingPrograms
-            public ActionResult Index()
+        // GET: TrainingPrograms
+        public ActionResult Index()
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT Id, [Name], StartDate, EndDate, MaxAttendees FROM TrainingProgram";
+
+                    var reader = cmd.ExecuteReader();
+
+                    var trainingPrograms = new List<TrainingProgram>();
+
+                    while (reader.Read())
+                    {
+                        trainingPrograms.Add(new TrainingProgram
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+                            
+                        });
+                    }
+
+                    reader.Close();
+                    return View(trainingPrograms);
+                }
+            }
+
+
         }
 
         // GET: TrainingPrograms/Details/5
