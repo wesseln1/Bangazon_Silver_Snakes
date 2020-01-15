@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workforce-Silver-Snakes", "Workforce-Silver-Snakes\Workforce-Silver-Snakes.csproj", "{6CF7904F-7B0B-471D-9E71-B1CDE47FC9E6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6CF7904F-7B0B-471D-9E71-B1CDE47FC9E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CF7904F-7B0B-471D-9E71-B1CDE47FC9E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CF7904F-7B0B-471D-9E71-B1CDE47FC9E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CF7904F-7B0B-471D-9E71-B1CDE47FC9E6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3411B5C4-0AC7-4D76-9454-204B5BD55315}
+	EndGlobalSection
+EndGlobal
