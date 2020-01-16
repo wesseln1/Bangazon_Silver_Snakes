@@ -35,6 +35,7 @@ namespace Workforce_Silver_Snakes.Controllers
                 {
                     cmd.CommandText = @"SELECT Id, Make, Model, DecomissionDate, PurchaseDate
                                         FROM Computer";
+                    //cmd.Parameters.Add(new SqlParameter("@id", id));
                     var reader = cmd.ExecuteReader();
                     var computers = new List<Computer>();
                     while (reader.Read())
@@ -232,7 +233,7 @@ namespace Workforce_Silver_Snakes.Controllers
         }
 
         // GET: Computers/Delete/5
-        public ActionResult Delete(int id)
+        public ActionResult Delete([FromRoute]int id)
         {
             using(SqlConnection conn = Connection)
             {
@@ -246,7 +247,7 @@ namespace Workforce_Silver_Snakes.Controllers
                                         WHERE NOT EXISTS 
                                         (SELECT e.ComputerId    
                                         FROM Employee e 
-                                        WHERE e.ComputerId = c.Id AND Id = @id)";
+                                        WHERE e.ComputerId = c.Id) AND c.Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     var reader = cmd.ExecuteReader();
                     Computer computer = null;
