@@ -74,7 +74,7 @@ namespace Workforce_Silver_Snakes.Controllers
                 {
                     cmd.CommandText = @"SELECT e.Id AS EmployeeId, e.FirstName, e.LastName, 
                                         d.Id AS DepartmentId, d.[Name] AS DepartmentName, e.ComputerId, e.Email,
-                                        t.Id AS TrainingProgramId, t.[Name] AS TrainingProgramName,
+                                        t.Id AS TrainingProgramId, t.[Name] AS TrainingProgramName, c.Model,
                                         et.Id AS EmployeeTrainingId
                                        FROM Employee e
                                        LEFT JOIN Department d ON e.DepartmentId = d.Id
@@ -117,7 +117,7 @@ namespace Workforce_Silver_Snakes.Controllers
                             employee.Computer = new Computer
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("ComputerId")),
-
+                                Model = reader.GetString(reader.GetOrdinal("Model"))
                             };
                         }
                         if (!reader.IsDBNull(reader.GetOrdinal("TrainingProgramId")))
