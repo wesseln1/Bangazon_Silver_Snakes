@@ -40,7 +40,46 @@ namespace Workforce_Silver_Snakes.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT Id, [Name], StartDate, EndDate, MaxAttendees FROM TrainingProgram";
+                    cmd.CommandText = @"SELECT tp.Id, tp.[Name], tp.StartDate, tp.EndDate, tp.MaxAttendees 
+                                        FROM TrainingProgram tp
+                                        WHERE GETDATE() < tp.StartDate";
+
+                    var reader = cmd.ExecuteReader();
+
+                    var trainingPrograms = new List<TrainingProgram>();
+
+                    while (reader.Read())
+                    {
+                        trainingPrograms.Add(new TrainingProgram
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+
+                        });
+                    }
+
+                    reader.Close();
+                    return View(trainingPrograms);
+                }
+            }
+
+
+        }
+
+        // GET: OldTrainingPrograms
+        public ActionResult OldTrainingIndex()
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT tp.Id, tp.[Name], tp.StartDate, tp.EndDate, tp.MaxAttendees 
+                                        FROM TrainingProgram tp
+                                        WHERE GETDATE() > tp.StartDate";
 
                     var reader = cmd.ExecuteReader();
 
@@ -212,6 +251,8 @@ namespace Workforce_Silver_Snakes.Controllers
             }
 
         }
+
+        //
 
         // POST: TrainingPrograms/Edit/5
         [HttpPost]
