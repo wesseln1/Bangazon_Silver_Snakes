@@ -133,13 +133,28 @@ namespace Workforce_Silver_Snakes.Controllers
         // POST: TrainingPrograms/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(TrainingProgram trainingProgram)
         {
             try
             {
-                // TODO: Add insert logic here
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @" INSERT INTO TrainingProgram(Name, StartDate, EndDate, MaxAttendees)
+                                                VALUES (@name, @startDate, @endDate, @maxAttendees);";
+                        cmd.Parameters.Add(new SqlParameter("@Name", trainingProgram.Name));
+                        cmd.Parameters.Add(new SqlParameter("@startDate", trainingProgram.StartDate));
+                        cmd.Parameters.Add(new SqlParameter("@endDate", trainingProgram.EndDate));
+                        cmd.Parameters.Add(new SqlParameter("@maxAttendees", trainingProgram.MaxAttendees));
 
-                return RedirectToAction(nameof(Index));
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    return RedirectToAction(nameof(Index));
+                }
+
             }
             catch
             {
@@ -230,19 +245,64 @@ namespace Workforce_Silver_Snakes.Controllers
         // GET: TrainingPrograms/Delete/5
         public ActionResult Delete(int id)
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT Id, [Name], StartDate, EndDate, MaxAttendees FROM TrainingProgram";
+
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                    var reader = cmd.ExecuteReader();
+
+                    if (reader.Read())
+                    {
+                        var trainingProgram = new TrainingProgram
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+
+                        };
+
+                        reader.Close();
+                        return View(trainingProgram);
+                    }
+
+                    return NotFound();
+                }
+            }
+
         }
 
         // POST: TrainingPrograms/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult Delete([FromRoute]int id, TrainingProgram trainingProgram)
         {
             try
             {
-                // TODO: Add delete logic here
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
 
-                return RedirectToAction(nameof(Index));
+                    {
+                        cmd.CommandText = @"DELETE FROM TrainingProgram WHERE Id = @id";
+
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        cmd.ExecuteNonQuery();
+
+                        return RedirectToAction(nameof(Index));
+
+                    }
+                }
+
+
             }
             catch
             {
@@ -250,7 +310,6 @@ namespace Workforce_Silver_Snakes.Controllers
             }
         }
 
-        
-        
+
     }
 }
