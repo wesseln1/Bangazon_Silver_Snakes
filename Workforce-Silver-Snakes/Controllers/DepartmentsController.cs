@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Workforce_Silver_Snakes.Models;
 
 namespace Workforce_Silver_Snakes.Controllers
 {
@@ -26,9 +27,36 @@ namespace Workforce_Silver_Snakes.Controllers
         // GET: Departments
         public ActionResult Index()
         {
-            return View();
-        }
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT d.[Name], d.Budget, COUNT(e.DepartmentId) AS EmployeeCount
+                                        FROM Department d
+                                        LEFT JOIN Employee e ON e.DepartmentId = d.Id
+                                        GROUP BY d.[Name], d.Budget 
+                                        ORDER BY COUNT(e.DepartmentId)";
+                    var reader = cmd.ExecuteReader();
+                    var departments = new List<Department>();
+                    while (reader.Read())
+                    {
+                        departments.Add(new Department
+                        {
 
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
+                            EmployeeCount = reader.GetInt32(reader.GetOrdinal("EmployeeCount"))
+                        });
+                    }
+
+
+                    reader.Close();
+                    return View(departments);
+                }
+            }
+        }
+    
         // GET: Departments/Details/5
         public ActionResult Details(int id)
         {
