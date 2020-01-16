@@ -109,7 +109,7 @@ namespace Workforce_Silver_Snakes.Controllers
                                     Id = employeeId,
                                     FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                                     LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                                    
+
                                 };
 
                                 trainingProgram.Employees.Add(employee);
@@ -196,21 +196,21 @@ namespace Workforce_Silver_Snakes.Controllers
                             };
 
                         }
-                            reader.Close();
+                        reader.Close();
 
-                        
+
                     }
-                        if (trainingProgram == null)
-                        {
-                            return NotFound();
-                        }
+                    if (trainingProgram == null)
+                    {
+                        return NotFound();
+                    }
 
-                           return View(trainingProgram);
+                    return View(trainingProgram);
 
                 }
 
             }
-            
+
         }
 
         // POST: TrainingPrograms/Edit/5
@@ -258,8 +258,9 @@ namespace Workforce_Silver_Snakes.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT Id, [Name], StartDate, EndDate, MaxAttendees FROM TrainingProgram
-                                        Where Id = @id";
+                    cmd.CommandText = @"SELECT tp.Id, tp.[Name], tp.StartDate, tp.EndDate, tp.MaxAttendees FROM TrainingProgram tp
+                                        WHERE tp.Id = @id
+                                        AND GETDATE() < tp.StartDate";
 
                     cmd.Parameters.Add(new SqlParameter("@id", id));
 
@@ -269,21 +270,28 @@ namespace Workforce_Silver_Snakes.Controllers
 
                     if (reader.Read())
                     {
-                         trainingProgram = new TrainingProgram
+                        if (trainingProgram == null)
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
-                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+                            trainingProgram = new TrainingProgram
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                                EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                                MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
 
-                        };
-
+                            };
+                        }
                         reader.Close();
-                        return View(trainingProgram);
+
                     }
 
-                    return NotFound();
+                    if (trainingProgram == null)
+                    {
+                        return NotFound();
+                    }
+
+                    return View(trainingProgram);
                 }
             }
 
@@ -292,10 +300,11 @@ namespace Workforce_Silver_Snakes.Controllers
         // POST: TrainingPrograms/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, TrainingProgram trainingProgram)
+        public ActionResult Delete([FromRoute]int id, TrainingProgram trainingProgram)
         {
             try
             {
+                DeleteTrainingRecords(id);
                 using (SqlConnection conn = Connection)
                 {
                     conn.Open();
@@ -303,6 +312,8 @@ namespace Workforce_Silver_Snakes.Controllers
 
                     {
                         cmd.CommandText = @"DELETE FROM TrainingProgram WHERE Id = @id";
+
+
 
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
@@ -315,12 +326,31 @@ namespace Workforce_Silver_Snakes.Controllers
 
 
             }
-            catch
+            catch (Exception ex)
             {
                 return View();
             }
         }
 
+        //Second Delete to Delete TrainingProgramId from EmployeeTraining table
 
+        private void DeleteTrainingRecords(int id)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"DELETE FROM EmployeeTraining WHERE TrainingProgramId = @id";
+
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                    cmd.ExecuteNonQuery();
+
+                }
+
+
+            }
+        }
     }
 }

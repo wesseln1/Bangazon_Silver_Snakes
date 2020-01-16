@@ -32,10 +32,10 @@ namespace Workforce_Silver_Snakes.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT d.[Name], d.Budget, COUNT(e.DepartmentId) AS EmployeeCount
+                    cmd.CommandText = @"SELECT d.[Name], d.Budget, d.Id, COUNT(e.DepartmentId) AS EmployeeCount
                                         FROM Department d
                                         LEFT JOIN Employee e ON e.DepartmentId = d.Id
-                                        GROUP BY d.[Name], d.Budget 
+                                        GROUP BY d.[Name], d.Id, d.Budget 
                                         ORDER BY COUNT(e.DepartmentId)";
                     var reader = cmd.ExecuteReader();
                     var departments = new List<Department>();
@@ -43,7 +43,7 @@ namespace Workforce_Silver_Snakes.Controllers
                     {
                         departments.Add(new Department
                         {
-
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
                             EmployeeCount = reader.GetInt32(reader.GetOrdinal("EmployeeCount"))
@@ -56,11 +56,81 @@ namespace Workforce_Silver_Snakes.Controllers
                 }
             }
         }
-    
+
         // GET: Departments/Details/5
         public ActionResult Details(int id)
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT 
+                                        d.[Name],
+                                        d.Id,
+                                        d.Budget,
+                                        e.Id as EmployeeId, e.FirstName, e.LastName
+                                        
+                                        FROM Department d 
+                                        LEFT JOIN Employee e ON e.DepartmentId = d.Id
+                                        WHERE DepartmentId = @id";
+
+
+
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                    var reader = cmd.ExecuteReader();
+
+                    var departments = new List<Department>();
+                    var employees = new List<Employee>();
+
+                    Department department = null;
+
+                    while (reader.Read())
+                    {
+                        if (department == null)
+                        {
+
+
+                            department = new Department
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
+
+                                Employees = new List<Employee>()
+
+                            };
+                        }
+                            var hasEmployee = !reader.IsDBNull(reader.GetOrdinal("EmployeeId"));
+
+                            if (hasEmployee)
+                            {
+                                department.Employees.Add(new Employee()
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
+
+
+
+                                });
+                            }
+                        }
+
+                            reader.Close();
+
+                            if (department == null)
+                            {
+                                return NotFound();
+                            }
+                            return View(department);
+                        }
+                       
+                    }
+                
+
+            
         }
 
         // GET: Departments/Create
@@ -72,10 +142,21 @@ namespace Workforce_Silver_Snakes.Controllers
         // POST: Departments/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(Department department)
         {
             try
             {
+                using (SqlConnection conn = Connection)
+                {
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"INSERT INTO Department (Name, Budget)
+                                           VALUES (@Name, @Budget)";
+
+                        cmd.Parameters.Add(new SqlParameter("@Name", department.Name));
+                        cmd.Parameters.Add(new SqlParameter("@Budget", department.Budget));
+                    }
+                }
                 // TODO: Add insert logic here
 
                 return RedirectToAction(nameof(Index));
@@ -131,5 +212,95 @@ namespace Workforce_Silver_Snakes.Controllers
                 return View();
             }
         }
+
+        private List<Department> GetDepartment()
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT Id, Name, Budget FROM Department";
+
+                    var reader = cmd.ExecuteReader();
+
+                    var departments = new List<Department>();
+
+                    while(reader.Read())
+                    {
+                        departments.Add(new Department
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            Budget = reader.GetInt32(reader.GetOrdinal("Department"))
+                        });
+                    }
+                    reader.Close();
+                    return departments;
+                }
+            }
+        }
+
+        private List<Employee> GetEmployees(int id)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT e.Id AS EmployeeId, e.FirstName, e.LastName 
+                                        FROM Employee e 
+                                        WHERE e.DepartmentId = @id";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                    var reader = cmd.ExecuteReader();
+
+                    var employees = new List<Employee>();
+
+                    while (reader.Read())
+                    {
+                        employees.Add(new Employee
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                            LastName = reader.GetString(reader.GetOrdinal("LastName"))
+                        });
+                    }
+                    reader.Close();
+                    return employees;
+                }
+            }
+        }
+
+
+        //private List<Employee> GetEmployeeCount(int id)
+        //{
+        //    using (SqlConnection conn = Connection)
+        //    {
+        //        conn.Open();
+        //        using (SqlCommand cmd = conn.CreateCommand())
+        //        {
+        //            cmd.CommandText = @"COUNT 
+        //                                e.Id AS EmployeeId, e.FirstName, e.LastName
+        //                               FROM Employee e 
+        //                                WHERE e.DepartmentId = @id";
+        //            cmd.Parameters.Add(new SqlParameter("@id", id));
+
+        //            var reader = cmd.ExecuteReader();
+
+        //            while (reader.Read())
+        //            {
+        //                employees.Add(new Employee
+        //                {
+        //                    Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+        //                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+        //                    LastName = reader.GetString(reader.GetOrdinal("LastName"))
+
+        //                });
+        //            }
+        //            reader.Close();
+        //            return employees;
+        //        }
+        //    }
+        }
     }
-}
