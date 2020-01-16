@@ -32,10 +32,10 @@ namespace Workforce_Silver_Snakes.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT d.[Name], d.Budget, COUNT(e.DepartmentId) AS EmployeeCount
+                    cmd.CommandText = @"SELECT d.[Name], d.Budget, d.Id, COUNT(e.DepartmentId) AS EmployeeCount
                                         FROM Department d
                                         LEFT JOIN Employee e ON e.DepartmentId = d.Id
-                                        GROUP BY d.[Name], d.Budget 
+                                        GROUP BY d.[Name], d.Id, d.Budget 
                                         ORDER BY COUNT(e.DepartmentId)";
                     var reader = cmd.ExecuteReader();
                     var departments = new List<Department>();
@@ -43,6 +43,7 @@ namespace Workforce_Silver_Snakes.Controllers
                     {
                         departments.Add(new Department
                         {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
                             EmployeeCount = reader.GetInt32(reader.GetOrdinal("EmployeeCount"))
