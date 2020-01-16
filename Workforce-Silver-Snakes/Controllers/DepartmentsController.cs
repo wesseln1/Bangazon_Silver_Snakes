@@ -56,7 +56,7 @@ namespace Workforce_Silver_Snakes.Controllers
                 }
             }
         }
-    
+
         // GET: Departments/Details/5
         public ActionResult Details(int id)
         {
@@ -69,12 +69,13 @@ namespace Workforce_Silver_Snakes.Controllers
                                         d.[Name],
                                         d.Id,
                                         d.Budget,
-                                        COUNT(e.DepartmentId) AS EmployeeCount
+                                        e.Id as EmployeeId, e.FirstName, e.LastName
+                                        
                                         FROM Department d 
                                         LEFT JOIN Employee e ON e.DepartmentId = d.Id
-                                        GROUP BY d.[Name], d.Id, d.Budget
-                                        HAVING d.Id = @id";
-                    
+                                        WHERE DepartmentId = @id";
+
+
 
                     cmd.Parameters.Add(new SqlParameter("@id", id));
 
@@ -83,26 +84,53 @@ namespace Workforce_Silver_Snakes.Controllers
                     var departments = new List<Department>();
                     var employees = new List<Employee>();
 
-                    if (reader.Read())
+                    Department department = null;
+
+                    while (reader.Read())
                     {
-                        var department = new Department
+                        if (department == null)
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
-                            EmployeeCount = reader.GetInt32(reader.GetOrdinal("EmployeeCount")),
 
-                            Employees = GetEmployees(id)
-                        };
 
-                        reader.Close();
-                        return View(department);
+                            department = new Department
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
+
+                                Employees = new List<Employee>()
+
+                            };
+                        }
+                            var hasEmployee = !reader.IsDBNull(reader.GetOrdinal("EmployeeId"));
+
+                            if (hasEmployee)
+                            {
+                                department.Employees.Add(new Employee()
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
+
+
+
+                                });
+                            }
+                        }
+
+                            reader.Close();
+
+                            if (department == null)
+                            {
+                                return NotFound();
+                            }
+                            return View(department);
+                        }
+                       
                     }
-                    reader.Close();
-                    return NotFound();
-                }
-            }
-          
+                
+
+            
         }
 
         // GET: Departments/Create
