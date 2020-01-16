@@ -63,8 +63,8 @@ namespace Workforce_Silver_Snakes.Controllers
                 using(SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"SELECT c.Id as ComputerId, c.Make, c.Model, c.PurchaseDate, e.Id as EmployeeId, e.FirstName, e.LastName, e.IsSupervisor
-                                     FROM Computer c
-                                     LEFT JOIN Employee e ON e.Id = e.ComputerId
+                                     FROM Computer c 
+                                     LEFT JOIN Employee e ON c.Id = e.ComputerId
                                      WHERE c.Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     var reader = cmd.ExecuteReader();
@@ -82,7 +82,6 @@ namespace Workforce_Silver_Snakes.Controllers
                             Make = reader.GetString(reader.GetOrdinal("Make")),
                             Model = reader.GetString(reader.GetOrdinal("Model")),
                             PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
-                            Employee = new Employee()
                             };
                         }
 
