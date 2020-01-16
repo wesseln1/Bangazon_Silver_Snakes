@@ -23,7 +23,7 @@ namespace Workforce_Silver_Snakes.Controllers
             {
                 return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
             }
-        } 
+        }
         // GET: Computers
         public ActionResult Index()
         {
@@ -83,7 +83,7 @@ namespace Workforce_Silver_Snakes.Controllers
                                 Employee = new Employee()
                             };
                         }
-                        
+
                         if (computer.Employee != null)
                         {
                             computer.Employee = new Employee()
@@ -234,19 +234,72 @@ namespace Workforce_Silver_Snakes.Controllers
         // GET: Computers/Delete/5
         public ActionResult Delete(int id)
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT c.Id AS ComputerId, c.Make, 
+                                        c.Model, c.PurchaseDate, 
+                                        c.DecomissionDate
+                                        FROM Computer c
+                                        WHERE NOT EXISTS 
+                                        (SELECT e.ComputerId    
+                                        FROM Employee e 
+                                        WHERE e.ComputerId = c.Id AND Id = @id)";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+                    var reader = cmd.ExecuteReader();
+                    Computer computer = null;
+
+                    if (reader.Read())
+                    {
+                        var dateIsNull = reader.IsDBNull(reader.GetOrdinal("DecomissionDate"));
+                        computer = new Computer
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("ComputerId")),
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Model = reader.GetString(reader.GetOrdinal("Model")),
+                            PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate"))
+                        };
+
+                        if (!dateIsNull)
+                        {
+                            computer.DecomissionDate = reader.GetDateTime(reader.GetOrdinal("DecomissionDate"));
+                        }
+                    }
+                    reader.Close();
+                    if (computer == null)
+                    {
+                        return NotFound();
+
+                    }
+                    return View(computer);
+                }
+            }
         }
 
         // POST: Computers/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult Delete([FromRoute]int id, Computer computer)
         {
             try
             {
-                // TODO: Add delete logic here
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"DELETE FROM Computer WHERE Id = @id";
 
-                return RedirectToAction(nameof(Index));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        cmd.ExecuteNonQuery();
+
+                        return RedirectToAction(nameof(Index));
+                    }
+                }
+
             }
             catch
             {
