@@ -37,7 +37,8 @@ namespace Workforce_Silver_Snakes.Controllers
                 {
                     cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, e.DepartmentId, d.[Name]
                                         FROM Employee e
-                                        LEFT JOIN Department d ON e.DepartmentId = d.Id";
+                                        LEFT JOIN Department d ON e.DepartmentId = d.Id
+                                        ";
 
 
                     var reader = cmd.ExecuteReader();
@@ -171,8 +172,8 @@ namespace Workforce_Silver_Snakes.Controllers
             {
                 return NotFound();
             }
-                return View(viewModel);
-            
+            return View(viewModel);
+
         }
 
         // POST: Employees/Create
@@ -261,7 +262,7 @@ namespace Workforce_Silver_Snakes.Controllers
 
             }
         }
-    
+
 
         // POST: Employees/Edit/5
         [HttpPost]

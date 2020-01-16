@@ -26,16 +26,35 @@ namespace Workforce_Silver_Snakes.Controllers
         }
 
         // GET: Computers
-        public ActionResult Index()
+        public ActionResult Index(
+            [FromQuery] string make,
+            [FromQuery] string model)
         {
-            using(SqlConnection conn = Connection)
+            using (SqlConnection conn = Connection)
             {
                 conn.Open();
-                using(SqlCommand cmd = conn.CreateCommand())
+                using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"SELECT Id, Make, Model, DecomissionDate, PurchaseDate
-                                        FROM Computer";
-                    //cmd.Parameters.Add(new SqlParameter("@id", id));
+                                        FROM Computer
+                                        WHERE 1 = 1";
+
+                    if (!string.IsNullOrWhiteSpace(make))
+                    {
+                        cmd.CommandText += @" AND Make LIKE @make";
+
+
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(model))
+                    {
+
+                        cmd.CommandText += @" AND Model LIKE @model";
+
+                    }
+
+                    cmd.Parameters.Add(new SqlParameter("@make", "%" + make + "%"));
+                    cmd.Parameters.Add(new SqlParameter("@model", "%" + model + "%"));
                     var reader = cmd.ExecuteReader();
                     var computers = new List<Computer>();
                     while (reader.Read())
@@ -43,9 +62,9 @@ namespace Workforce_Silver_Snakes.Controllers
                         computers.Add(new Computer
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                                Make = reader.GetString(reader.GetOrdinal("Make")),
-                                Model = reader.GetString(reader.GetOrdinal("Model")),
-                                PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate"))
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Model = reader.GetString(reader.GetOrdinal("Model")),
+                            PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate"))
                         });
                     }
                     reader.Close();
@@ -57,10 +76,10 @@ namespace Workforce_Silver_Snakes.Controllers
         // GET: Computers/Details/5
         public ActionResult Details(int id)
         {
-            using(SqlConnection conn = Connection)
+            using (SqlConnection conn = Connection)
             {
                 conn.Open();
-                using(SqlCommand cmd = conn.CreateCommand())
+                using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"SELECT c.Id as ComputerId, c.Make, c.Model, c.PurchaseDate, e.Id as EmployeeId, e.FirstName, e.LastName, e.IsSupervisor
                                      FROM Computer c 
@@ -78,10 +97,10 @@ namespace Workforce_Silver_Snakes.Controllers
 
                             computer = new Computer
                             {
-                            Id = reader.GetInt32(reader.GetOrdinal("ComputerId")),
-                            Make = reader.GetString(reader.GetOrdinal("Make")),
-                            Model = reader.GetString(reader.GetOrdinal("Model")),
-                            PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                                Id = reader.GetInt32(reader.GetOrdinal("ComputerId")),
+                                Make = reader.GetString(reader.GetOrdinal("Make")),
+                                Model = reader.GetString(reader.GetOrdinal("Model")),
+                                PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
                             };
                         }
 
@@ -89,9 +108,9 @@ namespace Workforce_Silver_Snakes.Controllers
                         {
                             computer.Employee = new Employee()
                             {
-                            Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
-                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                            LastName = reader.GetString(reader.GetOrdinal("LastName"))
+                                Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName"))
                             };
                         }
                     }
@@ -125,10 +144,10 @@ namespace Workforce_Silver_Snakes.Controllers
         {
             try
             {
-                using(SqlConnection conn = Connection)
+                using (SqlConnection conn = Connection)
                 {
                     conn.Open();
-                    using(SqlCommand cmd = conn.CreateCommand())
+                    using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"INSERT INTO Computer 
                                             (Make, Model, PurchaseDate)
@@ -155,10 +174,10 @@ namespace Workforce_Silver_Snakes.Controllers
         // GET: Computers/Edit/5
         public ActionResult Edit(int id)
         {
-            using(SqlConnection conn = Connection)
+            using (SqlConnection conn = Connection)
             {
                 conn.Open();
-                using(SqlCommand cmd = conn.CreateCommand())
+                using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"SELECT Id, Make, Model, PurchaseDate, DecomissionDate
                                         FROM Computer
@@ -200,10 +219,10 @@ namespace Workforce_Silver_Snakes.Controllers
         {
             try
             {
-                using(SqlConnection conn = Connection)
+                using (SqlConnection conn = Connection)
                 {
                     conn.Open();
-                    using(SqlCommand cmd = conn.CreateCommand())
+                    using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"UPDATE Computer
                                             SET 
@@ -234,10 +253,10 @@ namespace Workforce_Silver_Snakes.Controllers
         // GET: Computers/Delete/5
         public ActionResult Delete([FromRoute]int id)
         {
-            using(SqlConnection conn = Connection)
+            using (SqlConnection conn = Connection)
             {
                 conn.Open();
-                using(SqlCommand cmd = conn.CreateCommand())
+                using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"SELECT c.Id AS ComputerId, c.Make, 
                                         c.Model, c.PurchaseDate, 
@@ -285,10 +304,10 @@ namespace Workforce_Silver_Snakes.Controllers
         {
             try
             {
-                using(SqlConnection conn = Connection)
+                using (SqlConnection conn = Connection)
                 {
                     conn.Open();
-                    using(SqlCommand cmd = conn.CreateCommand())
+                    using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"DELETE FROM Computer WHERE Id = @id";
 
