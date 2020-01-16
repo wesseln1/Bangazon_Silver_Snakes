@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Workforce_Silver_Snakes.Models;
+using Workforce_Silver_Snakes.Models.ViewModels;
 
 namespace Workforce_Silver_Snakes.Controllers
 {
@@ -149,21 +150,78 @@ namespace Workforce_Silver_Snakes.Controllers
         // GET: TrainingPrograms/Edit/5
         public ActionResult Edit(int id)
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT tp.Id, tp.Name, tp.StartDate, tp.EndDate, tp.MaxAttendees                               FROM TrainingProgram tp
+                                        WHERE tp.Id = @id";
+
+                    cmd.Parameters.Add(new SqlParameter("Id", id));
+
+                    var reader = cmd.ExecuteReader();
+
+                    TrainingProgram trainingProgram = null;
+                    
+
+                if (reader.Read())
+                    {
+                        trainingProgram = new TrainingProgram
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+
+                        };
+
+                        reader.Close();
+                        return View(trainingProgram);
+                    }
+
+                    reader.Close();
+                    return NotFound();
+                }
+
+            
+            }
+            
         }
 
         // POST: TrainingPrograms/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public ActionResult Edit(int id, TrainingProgram trainingProgram)
         {
             try
             {
-                // TODO: Add update logic here
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"UPDATE TrainingProgram 
+                                            SET [Name] = @name,
+                                                StartDate = @startDate,
+                                                EndDate = @endDate,
+                                                MaxAttendees = @maxAttendees
+                                                WHERE Id = @id";
+
+                        cmd.Parameters.Add(new SqlParameter("@name", trainingProgram.Name));
+                        cmd.Parameters.Add(new SqlParameter("@startDate", trainingProgram.StartDate));
+                        cmd.Parameters.Add(new SqlParameter("@endDate", trainingProgram.EndDate));
+                        cmd.Parameters.Add(new SqlParameter("@maxAttendees", trainingProgram.MaxAttendees));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
 
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
                 return View();
             }
@@ -192,33 +250,7 @@ namespace Workforce_Silver_Snakes.Controllers
             }
         }
 
-        private List<Employee> GetEmployeesById(int employeeId)
-        {
-            using (SqlConnection conn = Connection)
-            {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = @"SELECT e.Id AS EmployeeId, e.FirstName, e.LastName  FROM
-                                        Employee e INNER JOIN EmployeeTraining et ON e.Id = et.EmployeeId
-                                        WHERE EmployeeId = @EmployeeId";
-                    cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
-                    var reader = cmd.ExecuteReader();
-                    List<Employee> employees = new List<Employee>();
-                    while (reader.Read())
-                    {
-                        Employee employee = new Employee
-                        {
-                            Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
-                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                            LastName = reader.GetString(reader.GetOrdinal("LastName"))
-                        };
-                        employees.Add(employee);
-                    };
-                    reader.Close();
-                    return employees;
-                }
-            }
-        }
+        
+        
     }
 }
