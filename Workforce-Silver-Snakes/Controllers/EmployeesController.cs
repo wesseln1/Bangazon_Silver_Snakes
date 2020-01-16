@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Workforce_Silver_Snakes.Models;
 
 namespace Workforce_Silver_Snakes.Controllers
 {
@@ -23,11 +24,41 @@ namespace Workforce_Silver_Snakes.Controllers
                 return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
             }
         }
-    
+
         // GET: Employees
         public ActionResult Index()
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT e.FirstName, e.LastName, e.DepartmentId, d.[Name]
+                                        FROM Employee e
+                                        LEFT JOIN Department d ON e.DepartmentId = d.Id";
+
+                    
+                    var reader = cmd.ExecuteReader();
+                    var employees = new List<Employee>();
+                    while (reader.Read())
+                    {
+                        employees.Add(new Employee
+                        {
+
+                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                            DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
+                            Department = new Department
+                            {
+                                Name = reader.GetString(reader.GetOrdinal("Name"))
+                            }
+                        });
+                    }
+                    reader.Close();
+                    return View(employees);
+                }
+
+            }
         }
 
         // GET: Employees/Details/5
