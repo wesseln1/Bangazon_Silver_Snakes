@@ -215,23 +215,91 @@ namespace Workforce_Silver_Snakes.Controllers
         // GET: Employees/Edit/5
         public ActionResult Edit(int id)
         {
-            return View();
+            var departments = GetDepartments().Select(d => new SelectListItem
+            {
+                Text = d.Name,
+                Value = d.Id.ToString()
+            }).ToList();
+
+            using (SqlConnection conn = Connection)
+            {
+
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT e.Id AS EmployeeId, e.FirstName, e.LastName, e.DepartmentId, e.Email, e.ComputerId
+                                        FROM Employee e
+                                        WHERE Id = @id";
+
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                    var reader = cmd.ExecuteReader();
+
+                    if (reader.Read())
+                    {
+                        var employee = new Employee
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                            DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
+                            Email = reader.GetString(reader.GetOrdinal("Email")),
+                            ComputerId = reader.GetInt32(reader.GetOrdinal("ComputerId"))
+                        };
+                        reader.Close();
+
+                        var viewModel = new EmployeeViewModel
+                        {
+                            Employee = employee,
+                            Departments = departments
+                        };
+                        return View(viewModel);
+                    }
+                    reader.Close();
+                    return NotFound();
+                }
+
+            }
         }
+    
 
         // POST: Employees/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public ActionResult Edit(int id, Employee employee)
         {
             try
             {
-                // TODO: Add update logic here
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"UPDATE Employee 
+                                            SET 
+                                            FirstName = @firstName, 
+                                            LastName = @lastName, 
+                                            DepartmentId = @departmentId,
+                                            Email = @email,
+                                            ComputerId = @computerId
+                                            WHERE Id = @id";
+
+                        cmd.Parameters.Add(new SqlParameter("@firstName", employee.FirstName));
+                        cmd.Parameters.Add(new SqlParameter("@lastName", employee.LastName));
+                        cmd.Parameters.Add(new SqlParameter("@departmentId", employee.DepartmentId));
+                        cmd.Parameters.Add(new SqlParameter("@email", employee.Email));
+                        cmd.Parameters.Add(new SqlParameter("@computerId", employee.ComputerId));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
 
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                return RedirectToAction(nameof(Edit), new { id = id });
             }
         }
 
