@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Workforce_Silver_Snakes.Models;
+using Workforce_Silver_Snakes.Models.ViewModels;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Workforce_Silver_Snakes.Controllers
 {
@@ -136,7 +138,18 @@ namespace Workforce_Silver_Snakes.Controllers
         // GET: Departments/Create
         public ActionResult Create()
         {
-            return View();
+            var departments = GetDepartment().Select(d => new SelectListItem
+            {
+                Text = d.Name,
+                Value = d.Id.ToString()
+            }).ToList();
+
+            var viewModel = new DepartmentViewModel
+                {
+                Departments = departments
+            };
+
+            return View(viewModel);
         }
 
         // POST: Departments/Create
@@ -148,6 +161,7 @@ namespace Workforce_Silver_Snakes.Controllers
             {
                 using (SqlConnection conn = Connection)
                 {
+                    conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"INSERT INTO Department (Name, Budget)
@@ -155,14 +169,17 @@ namespace Workforce_Silver_Snakes.Controllers
 
                         cmd.Parameters.Add(new SqlParameter("@Name", department.Name));
                         cmd.Parameters.Add(new SqlParameter("@Budget", department.Budget));
+
+                        cmd.ExecuteNonQuery();
                     }
                 }
                 // TODO: Add insert logic here
 
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine(ex);
                 return View();
             }
         }
@@ -232,7 +249,7 @@ namespace Workforce_Silver_Snakes.Controllers
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Budget = reader.GetInt32(reader.GetOrdinal("Department"))
+                            Budget = reader.GetInt32(reader.GetOrdinal("Budget"))
                         });
                     }
                     reader.Close();

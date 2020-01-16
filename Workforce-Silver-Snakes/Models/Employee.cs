@@ -21,6 +21,8 @@ namespace Workforce_Silver_Snakes.Models
         [Display(Name = "Computer Id")]
         public Computer Computer { get; set; }
         public Department Department { get; set; }
+        public List<TrainingProgram> TrainingProgram { get; set; } = new List<TrainingProgram>();
+      
 
     }
 }
