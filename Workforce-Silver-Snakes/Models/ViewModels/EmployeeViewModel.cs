@@ -11,5 +11,6 @@ namespace Workforce_Silver_Snakes.Models.ViewModels
         public Employee Employee { get; set; }
 
         public List<SelectListItem> Departments { get; set; }
+        public List<SelectListItem> Computers { get; set; }
     }
 }

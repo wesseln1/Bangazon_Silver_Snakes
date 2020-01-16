@@ -18,6 +18,8 @@ namespace Workforce_Silver_Snakes.Models
         public int DepartmentId { get; set; }
         public bool IsSupervisor { get; set; }
         public int ComputerId { get; set; }
+        [Display(Name = "Computer Id")]
+        public Computer Computer { get; set; }
         public Department Department { get; set; }
 
     }

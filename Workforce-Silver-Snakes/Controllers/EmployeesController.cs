@@ -5,8 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Configuration;
 using Workforce_Silver_Snakes.Models;
+using Workforce_Silver_Snakes.Models.ViewModels;
 
 namespace Workforce_Silver_Snakes.Controllers
 {
@@ -37,7 +39,7 @@ namespace Workforce_Silver_Snakes.Controllers
                                         FROM Employee e
                                         LEFT JOIN Department d ON e.DepartmentId = d.Id";
 
-                    
+
                     var reader = cmd.ExecuteReader();
                     var employees = new List<Employee>();
                     while (reader.Read())
@@ -70,21 +72,51 @@ namespace Workforce_Silver_Snakes.Controllers
         // GET: Employees/Create
         public ActionResult Create()
         {
-            return View();
+            var departments = GetDepartments().Select(d => new SelectListItem
+            {
+                Text = d.Name,
+                Value = d.Id.ToString()
+            }).ToList();
+            var viewModel = new EmployeeViewModel
+            {
+                Employee = new Employee(),
+                Departments = departments
+            };
+            return View(viewModel);
         }
 
         // POST: Employees/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(Employee employee)
         {
             try
             {
-                // TODO: Add insert logic here
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"INSERT INTO Employee 
+                                            (FirstName, LastName, DepartmentId, IsSupervisor, ComputerId, Email)
+                                            VALUES (@firstName, @lastName, @departmentId, @isSupervisor, @computerId, @email)";
+
+                        cmd.Parameters.Add(new SqlParameter("@firstName", employee.FirstName));
+                        cmd.Parameters.Add(new SqlParameter("@lastName", employee.LastName));
+                        cmd.Parameters.Add(new SqlParameter("@departmentId", employee.DepartmentId));
+                        cmd.Parameters.Add(new SqlParameter("@isSupervisor", employee.IsSupervisor));
+                        cmd.Parameters.Add(new SqlParameter("@computerId", employee.ComputerId));
+                        cmd.Parameters.Add(new SqlParameter("@email", ""));
+
+                        //use an excute non query for inserts bc we are not asking for anything back.
+                        //it is a non query- shows that the rows were affected.
+                        cmd.ExecuteNonQuery();
+                    }
+                }
 
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
                 return View();
             }
@@ -133,6 +165,32 @@ namespace Workforce_Silver_Snakes.Controllers
             catch
             {
                 return View();
+            }
+        }
+        private List<Department> GetDepartments()
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT Id,[Name] FROM Department";
+                    var reader = cmd.ExecuteReader();
+
+                    var departments = new List<Department>();
+
+                    while (reader.Read())
+                    {
+                        departments.Add(new Department
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name"))
+                        });
+                    }
+                    reader.Close();
+                    return departments;
+                }
+
             }
         }
     }
