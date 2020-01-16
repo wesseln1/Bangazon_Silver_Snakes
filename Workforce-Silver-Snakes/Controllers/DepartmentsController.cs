@@ -66,11 +66,14 @@ namespace Workforce_Silver_Snakes.Controllers
                 {
                     cmd.CommandText = @"SELECT 
                                         d.[Name],
+                                        d.Id,
                                         d.Budget,
                                         COUNT(e.DepartmentId) AS EmployeeCount
                                         FROM Department d 
-LEFT JOIN Employee e ON e.DepartmentId = d.Id
-                                        WHERE d.Id = @id";
+                                        LEFT JOIN Employee e ON e.DepartmentId = d.Id
+                                        GROUP BY d.[Name], d.Id, d.Budget
+                                        HAVING d.Id = @id";
+                    
 
                     cmd.Parameters.Add(new SqlParameter("@id", id));
 
@@ -83,9 +86,11 @@ LEFT JOIN Employee e ON e.DepartmentId = d.Id
                     {
                         var department = new Department
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
+                            EmployeeCount = reader.GetInt32(reader.GetOrdinal("EmployeeCount")),
+
                             Employees = GetEmployees(id)
                         };
 
