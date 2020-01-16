@@ -250,7 +250,8 @@ namespace Workforce_Silver_Snakes.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT Id, [Name], StartDate, EndDate, MaxAttendees FROM TrainingProgram";
+                    cmd.CommandText = @"SELECT Id, [Name], StartDate, EndDate, MaxAttendees FROM TrainingProgram
+                                        Where Id = @id";
 
                     cmd.Parameters.Add(new SqlParameter("@id", id));
 
