@@ -256,9 +256,11 @@ namespace Workforce_Silver_Snakes.Controllers
 
                     var reader = cmd.ExecuteReader();
 
+                    TrainingProgram trainingProgram = null;
+
                     if (reader.Read())
                     {
-                        var trainingProgram = new TrainingProgram
+                         trainingProgram = new TrainingProgram
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
@@ -281,7 +283,7 @@ namespace Workforce_Silver_Snakes.Controllers
         // POST: TrainingPrograms/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete([FromRoute]int id, TrainingProgram trainingProgram)
+        public ActionResult Delete(int id, TrainingProgram trainingProgram)
         {
             try
             {
