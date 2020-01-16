@@ -77,10 +77,17 @@ namespace Workforce_Silver_Snakes.Controllers
                 Text = d.Name,
                 Value = d.Id.ToString()
             }).ToList();
+            var computers = GetAvalibleComputers().Select(computers => new SelectListItem
+            {
+                Text = computers.Make + "" + computers.Model,
+                Value = computers.Id.ToString()
+            }).ToList();
+
             var viewModel = new EmployeeViewModel
             {
                 Employee = new Employee(),
-                Departments = departments
+                Departments = departments,
+                Computers = computers
             };
             return View(viewModel);
         }
@@ -106,7 +113,7 @@ namespace Workforce_Silver_Snakes.Controllers
                         cmd.Parameters.Add(new SqlParameter("@departmentId", employee.DepartmentId));
                         cmd.Parameters.Add(new SqlParameter("@isSupervisor", employee.IsSupervisor));
                         cmd.Parameters.Add(new SqlParameter("@computerId", employee.ComputerId));
-                        cmd.Parameters.Add(new SqlParameter("@email", ""));
+                        cmd.Parameters.Add(new SqlParameter("@email", employee.Email));
 
                         //use an excute non query for inserts bc we are not asking for anything back.
                         //it is a non query- shows that the rows were affected.
@@ -191,6 +198,48 @@ namespace Workforce_Silver_Snakes.Controllers
                     return departments;
                 }
 
+            }
+        }
+
+        private List<Computer> GetAvalibleComputers()
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT c.Id AS ComputerId, c.Make, 
+                                        c.Model, c.PurchaseDate, 
+                                        c.DecomissionDate
+                                        FROM Computer c
+                                        WHERE NOT EXISTS
+                                        (SELECT e.ComputerId AS EmployeeComputerId
+                                        FROM Employee e
+                                        WHERE e.ComputerId = c.Id)";
+                    var reader = cmd.ExecuteReader();
+                    var computers = new List<Computer>();
+
+                    while (reader.Read())
+                    {
+                        if (!reader.IsDBNull(reader.GetOrdinal("ComputerId")))
+                        {
+                            int computerId = reader.GetInt32(reader.GetOrdinal("ComputerId"));
+                            if (!computers.Any(c => c.Id == computerId))
+                            {
+                                Computer computer = new Computer
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("ComputerId")),
+                                    Make = reader.GetString(reader.GetOrdinal("Make")),
+                                    Model = reader.GetString(reader.GetOrdinal("Model"))
+                                };
+                                computers.Add(computer);
+                            }
+                        }
+                    }
+
+                    reader.Close();
+                    return computers;
+                }
             }
         }
     }
