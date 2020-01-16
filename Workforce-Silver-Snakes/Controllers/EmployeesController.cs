@@ -35,7 +35,7 @@ namespace Workforce_Silver_Snakes.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT e.FirstName, e.LastName, e.DepartmentId, d.[Name]
+                    cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, e.DepartmentId, d.[Name]
                                         FROM Employee e
                                         LEFT JOIN Department d ON e.DepartmentId = d.Id";
 
@@ -46,12 +46,13 @@ namespace Workforce_Silver_Snakes.Controllers
                     {
                         employees.Add(new Employee
                         {
-
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                             LastName = reader.GetString(reader.GetOrdinal("LastName")),
                             DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
                             Department = new Department
                             {
+                                Id = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
                                 Name = reader.GetString(reader.GetOrdinal("Name"))
                             }
                         });
@@ -71,44 +72,80 @@ namespace Workforce_Silver_Snakes.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, d.Id as DepartmentId, d.[Name], c.ComputerId
+                    cmd.CommandText = @"SELECT e.Id AS EmployeeId, e.FirstName, e.LastName, 
+                                        d.Id AS DepartmentId, d.[Name] AS DepartmentName, e.ComputerId, e.Email,
+                                        t.Id AS TrainingProgramId, t.[Name] AS TrainingProgramName,
+                                        et.Id AS EmployeeTrainingId
                                        FROM Employee e
                                        LEFT JOIN Department d ON e.DepartmentId = d.Id
                                        LEFT JOIN Computer c ON e.ComputerId = c.Id
+                                       LEFT JOIN EmployeeTraining et ON e.Id = et.EmployeeId
+                                       LEFT JOIN TrainingProgram t ON t.Id = et.TrainingProgramId
                                        WHERE e.Id = @id";
 
                     cmd.Parameters.Add(new SqlParameter("@id", id));
 
                     var reader = cmd.ExecuteReader();
+                    Employee employee = null;
+                    while (reader.Read())
 
-                    if (reader.Read())
                     {
-                        var employee = new Employee
+                        if (employee == null)
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                            Department = new Department
+                            employee = new Employee
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                Email = reader.GetString(reader.GetOrdinal("Email")),
+                                TrainingProgram = new List<TrainingProgram>(),
+                                Department = new Department(),
+                                Computer = new Computer()
+
+                            };
+                        }
+                        if (employee.Department != null)
+                        {
+                            employee.Department = new Department
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
-                                Name = reader.GetString(reader.GetOrdinal("DeptName"))
-                            },
-                            Computer = new Computer
+                                Name = reader.GetString(reader.GetOrdinal("DepartmentName"))
+                            };
+                        }
+                        if (employee.Computer != null)
+                        {
+                            employee.Computer = new Computer
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("ComputerId")),
 
+                            };
+                        }
+                        if (!reader.IsDBNull(reader.GetOrdinal("TrainingProgramId")))
+                        {
+                            int trainingProgramId = reader.GetInt32(reader.GetOrdinal("TrainingProgramId"));
+                            if (!employee.TrainingProgram.Any(t => t.Id == trainingProgramId))
+                            {
+                                TrainingProgram trainingProgram = new TrainingProgram
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("TrainingProgramId")),
+                                    Name = reader.GetString(reader.GetOrdinal("TrainingProgramName"))
+                                };
+                            employee.TrainingProgram.Add(trainingProgram);
                             }
-
-                        };
-                        reader.Close();
-                        return View(employee);
-                    }
-
+                        }
+                    };
                     reader.Close();
-                    return NotFound();
+                    if (employee == null)
+                    {
+                        reader.Close();
+                        return NotFound();
+                    }
+                    return View(employee);
                 }
+
             }
         }
+
 
         // GET: Employees/Create
         public ActionResult Create()
