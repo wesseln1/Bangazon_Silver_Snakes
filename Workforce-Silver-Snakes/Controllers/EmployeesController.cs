@@ -66,7 +66,48 @@ namespace Workforce_Silver_Snakes.Controllers
         // GET: Employees/Details/5
         public ActionResult Details(int id)
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, d.Id as DepartmentId, d.[Name], c.ComputerId
+                                       FROM Employee e
+                                       LEFT JOIN Department d ON e.DepartmentId = d.Id
+                                       LEFT JOIN Computer c ON e.ComputerId = c.Id
+                                       WHERE e.Id = @id";
+
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                    var reader = cmd.ExecuteReader();
+
+                    if (reader.Read())
+                    {
+                        var employee = new Employee
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                            Department = new Department
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
+                                Name = reader.GetString(reader.GetOrdinal("DeptName"))
+                            },
+                            Computer = new Computer
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("ComputerId")),
+
+                            }
+
+                        };
+                        reader.Close();
+                        return View(employee);
+                    }
+
+                    reader.Close();
+                    return NotFound();
+                }
+            }
         }
 
         // GET: Employees/Create
