@@ -171,36 +171,44 @@ namespace Workforce_Silver_Snakes.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"SELECT tp.Id, tp.Name, tp.StartDate, tp.EndDate, tp.MaxAttendees                               FROM TrainingProgram tp
-                                        WHERE tp.Id = @id";
+                                        WHERE tp.Id = @id
+                                        AND GETDATE() < tp.StartDate";
 
                     cmd.Parameters.Add(new SqlParameter("Id", id));
 
                     var reader = cmd.ExecuteReader();
 
                     TrainingProgram trainingProgram = null;
-                    
 
-                if (reader.Read())
+
+                    if (reader.Read())
                     {
-                        trainingProgram = new TrainingProgram
+                        if (trainingProgram == null)
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
-                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+                            trainingProgram = new TrainingProgram
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                                EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                                MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
 
-                        };
+                            };
 
-                        reader.Close();
-                        return View(trainingProgram);
+                        }
+                            reader.Close();
+
+                        
                     }
+                        if (trainingProgram == null)
+                        {
+                            return NotFound();
+                        }
 
-                    reader.Close();
-                    return NotFound();
+                           return View(trainingProgram);
+
                 }
 
-            
             }
             
         }
