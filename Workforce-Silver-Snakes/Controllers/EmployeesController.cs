@@ -130,7 +130,7 @@ namespace Workforce_Silver_Snakes.Controllers
                                     Id = reader.GetInt32(reader.GetOrdinal("TrainingProgramId")),
                                     Name = reader.GetString(reader.GetOrdinal("TrainingProgramName"))
                                 };
-                            employee.TrainingProgram.Add(trainingProgram);
+                                employee.TrainingProgram.Add(trainingProgram);
                             }
                         }
                     };
@@ -167,7 +167,12 @@ namespace Workforce_Silver_Snakes.Controllers
                 Departments = departments,
                 Computers = computers
             };
-            return View(viewModel);
+            if (computers.Count == 0)
+            {
+                return NotFound();
+            }
+                return View(viewModel);
+            
         }
 
         // POST: Employees/Create
