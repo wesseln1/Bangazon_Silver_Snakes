@@ -332,7 +332,7 @@ namespace Workforce_Silver_Snakes.Controllers
             }
         }
 
-        //second delete to delete TrainingProgramId from EmployeeTraining table
+        //Second Delete to Delete TrainingProgramId from EmployeeTraining table
 
         private void DeleteTrainingRecords(int id)
         {
