@@ -78,3 +78,15 @@ body {
     white-space: nowrap;
     line-height: 60px; /* Vertically center the text there */
 }
+
+/*Privacy Policy Image*/
+
+.privacy {
+    display: block !important;
+    margin: 0 auto !important;
+    position: center !important;
+    width: 50% !important;
+    border: 3px solid green !important;
+    padding: 10px !important;
+    padding-top: 30px !important;
+}
