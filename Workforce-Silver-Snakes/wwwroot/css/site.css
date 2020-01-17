@@ -16,9 +16,12 @@ a {
 }
 
 .btn-primary {
-  color: #fff;
+  color: #000000;
   background-color: #1b6ec2;
   border-color: #1861ac;
+}
+.nav-item {
+    font-weight: bold;
 }
 
 .nav-pills 
