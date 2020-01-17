@@ -105,6 +105,7 @@ namespace Workforce_Silver_Snakes.Controllers
 
 
         }
+ 
 
         // GET: TrainingPrograms/Details/5
         public ActionResult Details(int id)
