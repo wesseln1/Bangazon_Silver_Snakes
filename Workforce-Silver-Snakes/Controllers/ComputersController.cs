@@ -104,7 +104,7 @@ namespace Workforce_Silver_Snakes.Controllers
                             };
                         }
 
-                        if (computer.Employee != null)
+                        if (computer.Employee == null)
                         {
                             computer.Employee = new Employee()
                             {
