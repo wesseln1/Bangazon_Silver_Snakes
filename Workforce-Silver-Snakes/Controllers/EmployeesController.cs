@@ -68,20 +68,27 @@ namespace Workforce_Silver_Snakes.Controllers
         // GET: Employees/Details/5
         public ActionResult Details(int id)
         {
+            var trainings = GetAllTrainingPrograms().Select(t => new TrainingSelect
+            {
+                Name = t.Name,
+                Id = t.Id,
+                isSelected = false
+            }).ToList();
+
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT e.Id AS EmployeeId, e.FirstName, e.LastName, 
-                                        d.Id AS DepartmentId, d.[Name] AS DepartmentName, e.ComputerId, e.Email,
-                                        t.Id AS TrainingProgramId, t.[Name] AS TrainingProgramName, c.Model,
+                    cmd.CommandText = @"SELECT e.Id AS EmployeeId, e.FirstName,                         e.LastName, 
+                                        d.Id AS DepartmentId, d.[Name] AS                               DepartmentName, e.ComputerId, e.Email,
+                                        t.Id AS TrainingProgramId, t.[Name] AS                         TrainingProgramName, c.Model,
                                         et.Id AS EmployeeTrainingId
                                        FROM Employee e
-                                       LEFT JOIN Department d ON e.DepartmentId = d.Id
+                                       LEFT JOIN Department d ON e.DepartmentId =                     d.Id
                                        LEFT JOIN Computer c ON e.ComputerId = c.Id
-                                       LEFT JOIN EmployeeTraining et ON e.Id = et.EmployeeId
-                                       LEFT JOIN TrainingProgram t ON t.Id = et.TrainingProgramId
+                                       LEFT JOIN EmployeeTraining et ON e.Id =                        et.EmployeeId
+                                       LEFT JOIN TrainingProgram t ON t.Id =                          et.TrainingProgramId
                                        WHERE e.Id = @id";
 
                     cmd.Parameters.Add(new SqlParameter("@id", id));
@@ -99,11 +106,18 @@ namespace Workforce_Silver_Snakes.Controllers
                                 FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                                 LastName = reader.GetString(reader.GetOrdinal("LastName")),
                                 Email = reader.GetString(reader.GetOrdinal("Email")),
-                                TrainingProgram = new List<TrainingProgram>(),
                                 Department = new Department(),
                                 Computer = new Computer()
 
                             };
+                            if (!reader.IsDBNull(reader.GetOrdinal("TrainingProgramName")))
+                            {
+                                employee.TrainingPrograms.Add(reader.GetString(reader.GetOrdinal("TrainingProgramName")));
+                            }
+                        }
+                        else if (!reader.IsDBNull(reader.GetOrdinal("TrainingProgramName")))
+                        {
+                            employee.TrainingPrograms.Add(reader.GetString(reader.GetOrdinal("TrainingProgramName")));
                         }
                         if (employee.Department != null)
                         {
@@ -121,29 +135,70 @@ namespace Workforce_Silver_Snakes.Controllers
                                 Model = reader.GetString(reader.GetOrdinal("Model"))
                             };
                         }
-                        if (!reader.IsDBNull(reader.GetOrdinal("TrainingProgramId")))
-                        {
-                            int trainingProgramId = reader.GetInt32(reader.GetOrdinal("TrainingProgramId"));
-                            if (!employee.TrainingProgram.Any(t => t.Id == trainingProgramId))
-                            {
-                                TrainingProgram trainingProgram = new TrainingProgram
-                                {
-                                    Id = reader.GetInt32(reader.GetOrdinal("TrainingProgramId")),
-                                    Name = reader.GetString(reader.GetOrdinal("TrainingProgramName"))
-                                };
-                                employee.TrainingProgram.Add(trainingProgram);
-                            }
-                        }
                     };
                     reader.Close();
+
                     if (employee == null)
                     {
-                        reader.Close();
-                        return NotFound();
+                        return NotFound($"No Employee found with the ID of {id}");
                     }
+                    foreach (TrainingSelect training in trainings)
+                    {
+                        if (employee.TrainingPrograms.Any(e => e == training.Name))
+                        {
+                            training.isSelected = true;
+                        }
+                    }
+
+                    employee.TrainingList = trainings;
+
                     return View(employee);
                 }
 
+            }
+        }
+
+        // POST: Employees/EditTraining/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EditTraining(int id, Employee employee)
+        {
+            try
+            {
+                DeleteAllUpcomingTrianing(id);
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        foreach (TrainingSelect training in employee.TrainingList)
+                        {
+                            if (training.isSelected)
+                            {
+                                cmd.CommandText = @"INSERT INTO EmployeeTraining (TrainingProgramId, EmployeeId)
+                                            OUTPUT INSERTED.id
+                                            VALUES (@trainigProgramId, @employeeId)";
+
+                                cmd.Parameters.Add(new SqlParameter("@trainigProgramId", training.Id));
+                                cmd.Parameters.Add(new SqlParameter("@employeeId", employee.Id));
+
+
+
+                                cmd.ExecuteNonQuery();
+                                cmd.Parameters.Clear();
+
+                            }
+
+                        }
+                    }
+                }
+
+                // RedirectToAction("Index");
+                return RedirectToAction(nameof(Details), new { id = id });
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction(nameof(Index));
             }
         }
 
@@ -326,6 +381,8 @@ namespace Workforce_Silver_Snakes.Controllers
                 return View();
             }
         }
+
+        // Helper method to get all departments
         private List<Department> GetDepartments()
         {
             using (SqlConnection conn = Connection)
@@ -353,6 +410,79 @@ namespace Workforce_Silver_Snakes.Controllers
             }
         }
 
+        //helper function to grab all training programs
+        private List<TrainingProgram> GetAllTrainingPrograms()
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT Id, [Name], StartDate, EndDate, MaxAttendees 
+                                        FROM TrainingProgram
+                                        WHERE StartDate >= @today";
+                    //
+                    cmd.Parameters.Add(new SqlParameter("@today", DateTime.Now));
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    List<TrainingProgram> trainingPrograms = new List<TrainingProgram>();
+
+                    int IdOrdinal = reader.GetOrdinal("Id");
+                    int NameOrdinal = reader.GetOrdinal("Name");
+                    int StartDateOrdinal = reader.GetOrdinal("StartDate");
+                    int EndDateOrdinal = reader.GetOrdinal("EndDate");
+                    int MaxAttendeesOrdinal = reader.GetOrdinal("MaxAttendees");
+
+                    while (reader.Read())
+                    {
+                        TrainingProgram trainingProgram = new TrainingProgram
+                        {
+                            Id = reader.GetInt32(IdOrdinal),
+                            Name = reader.GetString(NameOrdinal),
+                            StartDate = reader.GetDateTime(StartDateOrdinal),
+                            EndDate = reader.GetDateTime(EndDateOrdinal),
+                            MaxAttendees = reader.GetInt32(MaxAttendeesOrdinal)
+                        };
+
+
+                        trainingPrograms.Add(trainingProgram);
+                    }
+                    reader.Close();
+
+                    return trainingPrograms;
+                }
+            }
+        }
+
+        //helper function to delete all upcoming trainings for employee
+        private void DeleteAllUpcomingTrianing(int id)
+        {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"DELETE et FROM EmployeeTraining et
+                                            LEFT JOIN TrainingProgram tp ON tp.Id = et.TrainingProgramId
+                                            WHERE EmployeeId = @eId AND StartDate >= @today";
+                        cmd.Parameters.Add(new SqlParameter("@eId", id));
+                        cmd.Parameters.Add(new SqlParameter("@today", DateTime.Now));
+
+                        cmd.ExecuteNonQuery();
+
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+
+            }
+        }
+
+        // Helper method to get all avalible computers
         private List<Computer> GetAvalibleComputers()
         {
             using (SqlConnection conn = Connection)
