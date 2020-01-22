@@ -16,8 +16,8 @@ namespace Workforce_Silver_Snakes.Models
 
         [Display(Name = "Employee Count")]
         public int EmployeeCount { get; set; }
-        
-        public List<Employee> Employees { get; set; }
+
+        public List<Employee> Employees { get; set; } = new List<Employee>();
         public Employee Employee { get; set; }
     }
 }
