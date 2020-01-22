@@ -15,10 +15,13 @@ namespace Workforce_Silver_Snakes.Models
         [Display(Name = "Last Name")]
         public string LastName { get; set; }
         public string Email { get; set; }
+        [Display(Name = "Department")]
         public int DepartmentId { get; set; }
+        [Display(Name = "Supervisor")]
         public bool IsSupervisor { get; set; }
+        [Display(Name = "Computer")]
         public int ComputerId { get; set; }
-        [Display(Name = "Computer Id")]
+      
         public Computer Computer { get; set; }
         public Department Department { get; set; }
         public List<String> TrainingPrograms { get; set; } = new List<String>();
