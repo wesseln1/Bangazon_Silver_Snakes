@@ -80,15 +80,15 @@ namespace Workforce_Silver_Snakes.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT e.Id AS EmployeeId, e.FirstName,                         e.LastName, 
-                                        d.Id AS DepartmentId, d.[Name] AS                               DepartmentName, e.ComputerId, e.Email,
-                                        t.Id AS TrainingProgramId, t.[Name] AS                         TrainingProgramName, c.Model,
+                    cmd.CommandText = @"SELECT e.Id AS EmployeeId, e.FirstName,e.LastName, 
+                                        d.Id AS DepartmentId, d.[Name] AS DepartmentName, e.ComputerId, e.Email,
+                                        t.Id AS TrainingProgramId, t.[Name] AS TrainingProgramName, c.Model,
                                         et.Id AS EmployeeTrainingId
                                        FROM Employee e
-                                       LEFT JOIN Department d ON e.DepartmentId =                     d.Id
+                                       LEFT JOIN Department d ON e.DepartmentId = d.Id
                                        LEFT JOIN Computer c ON e.ComputerId = c.Id
-                                       LEFT JOIN EmployeeTraining et ON e.Id =                        et.EmployeeId
-                                       LEFT JOIN TrainingProgram t ON t.Id =                          et.TrainingProgramId
+                                       LEFT JOIN EmployeeTraining et ON e.Id = et.EmployeeId
+                                       LEFT JOIN TrainingProgram t ON t.Id = et.TrainingProgramId
                                        WHERE e.Id = @id";
 
                     cmd.Parameters.Add(new SqlParameter("@id", id));
@@ -276,6 +276,11 @@ namespace Workforce_Silver_Snakes.Controllers
                 Text = d.Name,
                 Value = d.Id.ToString()
             }).ToList();
+            var computers = GetAvalibleComputers().Select(d => new SelectListItem
+            {
+                Text = d.Make,
+                Value = d.Id.ToString()
+            }).ToList();
 
             using (SqlConnection conn = Connection)
             {
@@ -307,7 +312,8 @@ namespace Workforce_Silver_Snakes.Controllers
                         var viewModel = new EmployeeViewModel
                         {
                             Employee = employee,
-                            Departments = departments
+                            Departments = departments,
+                            Computers = computers
                         };
                         return View(viewModel);
                     }
