@@ -40,7 +40,10 @@ namespace Workforce_Silver_Snakes.Controllers
                                         GROUP BY d.[Name], d.Id, d.Budget 
                                         ORDER BY COUNT(e.DepartmentId)";
                     var reader = cmd.ExecuteReader();
+
+
                     var departments = new List<Department>();
+
                     while (reader.Read())
                     {
                         departments.Add(new Department
@@ -75,7 +78,7 @@ namespace Workforce_Silver_Snakes.Controllers
                                         
                                         FROM Department d 
                                         LEFT JOIN Employee e ON e.DepartmentId = d.Id
-                                        WHERE DepartmentId = @id";
+                                        WHERE d.Id = @id";
 
 
 
@@ -104,35 +107,34 @@ namespace Workforce_Silver_Snakes.Controllers
 
                             };
                         }
-                            var hasEmployee = !reader.IsDBNull(reader.GetOrdinal("EmployeeId"));
 
-                            if (hasEmployee)
+                        var hasEmployee = !reader.IsDBNull(reader.GetOrdinal("EmployeeId"));
+
+                        if (hasEmployee)
+                        {
+                            department.Employees.Add(new Employee()
                             {
-                                department.Employees.Add(new Employee()
-                                {
-                                    Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
-                                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
 
 
 
-                                });
-                            }
+                            });
                         }
-
-                            reader.Close();
-
-                            if (department == null)
-                            {
-                                return NotFound();
-                            }
-                            return View(department);
-                        }
-                       
                     }
-                
 
-            
+                    reader.Close();
+
+                    if (department == null)
+                    {
+                        return NotFound();
+                    }
+                    return View(department);
+                }
+
+            }
+
         }
 
         // GET: Departments/Create
@@ -145,7 +147,7 @@ namespace Workforce_Silver_Snakes.Controllers
             }).ToList();
 
             var viewModel = new DepartmentViewModel
-                {
+            {
                 Departments = departments
             };
 
@@ -243,7 +245,7 @@ namespace Workforce_Silver_Snakes.Controllers
 
                     var departments = new List<Department>();
 
-                    while(reader.Read())
+                    while (reader.Read())
                     {
                         departments.Add(new Department
                         {
@@ -263,7 +265,7 @@ namespace Workforce_Silver_Snakes.Controllers
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
-                    using (SqlCommand cmd = conn.CreateCommand())
+                using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"SELECT e.Id AS EmployeeId, e.FirstName, e.LastName 
                                         FROM Employee e 
@@ -319,5 +321,5 @@ namespace Workforce_Silver_Snakes.Controllers
         //            return employees;
         //        }
         //    }
-        }
     }
+}
