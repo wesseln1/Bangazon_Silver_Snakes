@@ -12,9 +12,9 @@
     <div class="col-md-4">
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            
-                <input asp-for="Employee.Id" class="form-control" type="hidden" />
-              
+
+            <input asp-for="Employee.Id" class="form-control" type="hidden" />
+
             <div class="form-group">
                 <label asp-for="Employee.FirstName" class="control-label"></label>
                 <input asp-for="Employee.FirstName" class="form-control" />
@@ -32,8 +32,9 @@
             </div>
             <div class="form-group">
                 <label asp-for="Employee.DepartmentId" class="control-label"></label>
-                <input asp-for="Employee.DepartmentId" class="form-control" />
-                <span asp-validation-for="Employee.DepartmentId" class="text-danger"></span>
+                @*<input asp-for="Employee.ComputerId" class="form-control" />*@
+                <select asp-for="Employee.DepartmentId" asp-items="@Model.Departments"></select>
+                @*<span asp-validation-for="Employee.ComputerId" class="text-danger"></span>*@
             </div>
             <div class="form-group form-check">
                 <label class="form-check-label">
@@ -42,8 +43,9 @@
             </div>
             <div class="form-group">
                 <label asp-for="Employee.ComputerId" class="control-label"></label>
-                <input asp-for="Employee.ComputerId" class="form-control" />
-                <span asp-validation-for="Employee.ComputerId" class="text-danger"></span>
+                @*<input asp-for="Employee.ComputerId" class="form-control" />*@
+                <select asp-for="Employee.ComputerId" asp-items="@Model.Computers"></select>
+                @*<span asp-validation-for="Employee.ComputerId" class="text-danger"></span>*@
             </div>
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
